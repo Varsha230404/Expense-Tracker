@@ -24,7 +24,9 @@ app.use(express.json());
 
 // Database setup
 let db;
-const DB_PATH = join(__dirname, 'expenses.db');
+const DB_PATH = process.env.NODE_ENV === 'production'
+    ? '/tmp/expenses.db'
+    : join(__dirname, 'expenses.db');
 
 async function initDatabase() {
     const SQL = await initSqlJs();
@@ -266,9 +268,13 @@ async function initDatabase() {
 }
 
 function saveDatabase() {
-    const data = db.export();
-    const buffer = Buffer.from(data);
-    writeFileSync(DB_PATH, buffer);
+    try {
+        const data = db.export();
+        const buffer = Buffer.from(data);
+        writeFileSync(DB_PATH, buffer);
+    } catch (err) {
+        console.error('Failed to save database:', err.message);
+    }
 }
 
 // Helper to run queries
