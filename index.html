@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="Track your expenses with a beautiful, modern expense tracker. Visualize spending, manage categories, and stay on budget.">
+  <title>ExpenseFlow - Smart Expense Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <span class="logo-icon">💸</span>
+          <span class="logo-text">ExpenseFlow</span>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <div class="nav-section-title" id="navAuthSection" style="display: none;">
+          <span>My Account</span>
+        </div>
+
+        <!-- Protected links (shown when logged in) -->
+        <a href="#/" class="nav-item auth-required" data-page="dashboard" style="display: none;">
+          <span class="nav-icon">📊</span>
+          <span class="nav-text">Dashboard</span>
+        </a>
+        <a href="#/expenses" class="nav-item auth-required" data-page="expenses" style="display: none;">
+          <span class="nav-icon">💳</span>
+          <span class="nav-text">Expenses</span>
+        </a>
+        <a href="#/add" class="nav-item auth-required" data-page="add" style="display: none;">
+          <span class="nav-icon">➕</span>
+          <span class="nav-text">Add Expense</span>
+        </a>
+        <a href="#/analytics" class="nav-item auth-required" data-page="analytics" style="display: none;">
+          <span class="nav-icon">📈</span>
+          <span class="nav-text">Analytics</span>
+        </a>
+        <a href="#/groups" class="nav-item auth-required" data-page="groups" style="display: none;">
+          <span class="nav-icon">👥</span>
+          <span class="nav-text">Groups</span>
+        </a>
+
+        <!-- Auth links (shown when logged out) -->
+        <div class="nav-section-title guest-only">
+          <span>Account</span>
+        </div>
+        <a href="#/login" class="nav-item guest-only" data-page="login">
+          <span class="nav-icon">🔑</span>
+          <span class="nav-text">Login</span>
+        </a>
+        <a href="#/register" class="nav-item guest-only" data-page="register">
+          <span class="nav-icon">📝</span>
+          <span class="nav-text">Register</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <!-- User info (shown when logged in) -->
+        <div class="user-info auth-required" id="userInfoPanel" style="display: none;">
+          <div class="user-avatar">👤</div>
+          <div class="user-details">
+            <span class="user-name" id="userName">User</span>
+            <button class="logout-btn" id="logoutBtn">Logout</button>
+          </div>
+        </div>
+
+        <!-- Guest info (shown when logged out) -->
+        <div class="user-info guest-only" id="guestInfoPanel">
+          <div class="user-avatar">👋</div>
+          <div class="user-details">
+            <span class="user-name">Welcome, Guest</span>
+            <a href="#/login" class="user-status">Login to track expenses</a>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+      <button class="menu-toggle" id="menuToggle">☰</button>
+      <div class="logo">
+        <span class="logo-icon">💸</span>
+        <span class="logo-text">ExpenseFlow</span>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+      <!-- Dynamic content loaded here -->
+    </main>
+  </div>
+
+  <!-- Modal Overlay -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">Modal</h3>
+        <button class="modal-close" id="modalClose">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- Floating Action Button -->
+  <div class="fab-container auth-required" id="fabContainer" style="display: none;">
+    <button class="fab-main" id="fabMain" title="Quick Actions">
+      <span class="fab-icon">+</span>
+    </button>
+    <div class="fab-menu" id="fabMenu">
+      <button class="fab-action" data-action="quick-add" title="Quick Add">
+        <span class="fab-action-icon">⚡</span>
+        <span class="fab-action-label">Quick Add</span>
+      </button>
+      <button class="fab-action" data-action="import-csv" title="Import CSV">
+        <span class="fab-action-icon">📤</span>
+        <span class="fab-action-label">Import CSV</span>
+      </button>
+      <button class="fab-action" data-action="scan-receipt" title="Scan Receipt">
+        <span class="fab-action-icon">📸</span>
+        <span class="fab-action-label">Scan Receipt</span>
+      </button>
+      <button class="fab-action" data-action="parse-text" title="Paste Bank SMS">
+        <span class="fab-action-icon">💬</span>
+        <span class="fab-action-label">Paste SMS</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script type="module" src="main.js"></script>
+</body>
+
+</html>
