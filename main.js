@@ -441,13 +441,7 @@ function renderLogin(container) {
           <h1 class="auth-title">Welcome Back</h1>
           <p class="auth-subtitle">Sign in to access your expense tracker</p>
         </div>
-        
-        <!-- Google Sign-In Button -->
-        <div id="googleSignInBtn" style="display: flex; justify-content: center; margin-bottom: 1.5rem;"></div>
-        
-        <div class="auth-divider">
-          <span>or sign in with email</span>
-        </div>
+
         
         <form id="loginForm">
           <div class="form-group">
@@ -498,9 +492,6 @@ function renderLogin(container) {
   `;
 
   document.getElementById('loginForm').addEventListener('submit', handleLogin);
-
-  // Initialize Google Sign-In
-  initGoogleSignIn();
 }
 
 async function handleLogin(e) {
@@ -528,60 +519,7 @@ async function handleLogin(e) {
   }
 }
 
-// Google Sign-In Configuration
-const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com'; // Replace with your Client ID
 
-function initGoogleSignIn() {
-  const googleBtnContainer = document.getElementById('googleSignInBtn');
-  if (!googleBtnContainer) return;
-
-  // Check if Google library is loaded
-  if (typeof google !== 'undefined' && google.accounts) {
-    google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: handleGoogleSignIn,
-      auto_select: false,
-      cancel_on_tap_outside: true
-    });
-
-    google.accounts.id.renderButton(googleBtnContainer, {
-      theme: 'filled_black',
-      size: 'large',
-      width: 300,
-      text: 'signin_with',
-      shape: 'rectangular',
-      logo_alignment: 'left'
-    });
-  } else {
-    // Fallback button if Google library not loaded
-    googleBtnContainer.innerHTML = `
-      <button class="google-signin-btn" onclick="showToast('error', 'Google Sign-In', 'Please configure your Google Client ID')">
-        <svg viewBox="0 0 24 24" width="20" height="20" style="margin-right: 10px;">
-          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-        </svg>
-        Sign in with Google
-      </button>
-    `;
-  }
-}
-
-async function handleGoogleSignIn(response) {
-  try {
-    // Send the Google credential to our backend
-    const { user, token } = await api.post('/auth/google', {
-      credential: response.credential
-    });
-
-    saveAuthState(user, token, true);
-    showToast('success', 'Welcome!', `Signed in as ${user.name}`);
-    window.location.hash = '#/dashboard';
-  } catch (error) {
-    showToast('error', 'Google Sign-In Failed', error.message);
-  }
-}
 
 // =====================================================
 // REGISTER PAGE
@@ -2594,7 +2532,13 @@ async function renderGroupDetail(container, groupId) {
         <h3 style="margin: 0 0 16px 0;">💳 Who Owes Whom</h3>
         ${balanceData.transactions.length === 0 ?
         '<p style="color: var(--text-muted);">✅ All settled up!</p>' :
-        balanceData.transactions.map(t => `
+        balanceData.transactions.map(t => {
+          const isCurrentUserPayer = state.user && t.from.toLowerCase() === state.user.name.toLowerCase();
+          const payeeUpi = (group.members.find(m => m.name === t.to) || {}).upi_id || '';
+          const upiLink = payeeUpi
+            ? `upi://pay?pa=${encodeURIComponent(payeeUpi)}&pn=${encodeURIComponent(t.to)}&am=${t.amount.toFixed(2)}&cu=INR&tn=${encodeURIComponent('Settlement - ExpenseFlow')}`
+            : '';
+          return `
             <div style="
               display: flex; align-items: center; justify-content: space-between;
               padding: 12px 0; border-bottom: 1px solid var(--border-color-light);
@@ -2604,9 +2548,20 @@ async function renderGroupDetail(container, groupId) {
                 <span style="color: var(--text-muted);"> owes </span>
                 <span style="font-weight: 600; color: var(--success);">${t.to}</span>
               </div>
-              <div style="font-weight: 700; font-size: var(--font-size-lg);">₹${t.amount.toLocaleString()}</div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-weight: 700; font-size: var(--font-size-lg);">₹${t.amount.toLocaleString()}</span>
+                ${isCurrentUserPayer && payeeUpi ? `
+                  <a href="${upiLink}" style="
+                    padding: 6px 14px; border: none; border-radius: var(--radius-md);
+                    background: linear-gradient(135deg, #5f3dc4, #7c3aed); color: white;
+                    font-weight: 600; font-size: 0.8rem; text-decoration: none;
+                    display: inline-flex; align-items: center; gap: 4px;
+                  " onclick="event.stopPropagation();">📱 Pay</a>
+                ` : ''}
+              </div>
             </div>
-          `).join('')
+          `;
+        }).join('')
       }
       </div>
 
@@ -2952,7 +2907,7 @@ function openSettleUpModal(groupId, members, transactions) {
               flex: 1; padding: 8px; border: 1px solid var(--accent-primary); border-radius: var(--radius-md);
               background: white; color: var(--accent-primary); cursor: pointer; font-weight: 600; font-size: 0.85rem;
             ">✅ Mark as Settled</button>
-            ${payeeUpi && isCurrentUserPayer ? `
+            ${isCurrentUserPayer ? (payeeUpi ? `
               <a href="${upiLink}" style="
                 flex: 1; padding: 8px; border: none; border-radius: var(--radius-md);
                 background: linear-gradient(135deg, #5f3dc4, #7c3aed); color: white; cursor: pointer;
@@ -2961,19 +2916,13 @@ function openSettleUpModal(groupId, members, transactions) {
               " onclick="event.stopPropagation();">
                 📱 Pay via UPI
               </a>
-            ` : `
-              <button disabled style="
-                flex: 1; padding: 8px; border: 1px solid var(--border-color-light); border-radius: var(--radius-md);
-                background: var(--bg-secondary); color: var(--text-muted); cursor: not-allowed;
-                font-weight: 500; font-size: 0.85rem;
-              " title="No UPI ID set for ${t.to}">📱 No UPI ID</button>
-            `}
+            ` : '') : ''}
           </div>
-          ${payeeUpi && isCurrentUserPayer ? `<div style="margin-top: 6px; font-size: 0.75rem; color: var(--text-muted); text-align: center;">
+          ${isCurrentUserPayer ? (payeeUpi ? `<div style="margin-top: 6px; font-size: 0.75rem; color: var(--text-muted); text-align: center;">
             🔒 Secure — opens your UPI app (GPay/PhonePe/Paytm)
           </div>` : `<div style="margin-top: 6px; font-size: 0.75rem; color: var(--text-muted); text-align: center;">
-            Add ${t.to}'s UPI ID when creating the group to enable UPI pay
-          </div>`}
+            💡 Add ${t.to}'s UPI ID via Manage UPI to enable quick payment
+          </div>`) : ''}
         </div>
       `}).join('')}
     </div>
